@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Home Page</h2>
+<p>Below is a list of items you have created:</p>
+
+{% if items %}
+    <ul>
+    {% for item in items %}
+        <li>
+            {{ item.name }} - {{ item.description }}
+            <div>
+                <a href="{{ url_for('main.view_item', item_id=item.id) }}"><button class="btn-view">View</button></a>
+                <a href="{{ url_for('main.edit_item', item_id=item.id) }}"><button class="btn-edit">Edit</button></a>
+                <a href="{{ url_for('main.delete_item', item_id=item.id) }}"><button class="btn-delete">Delete</button></a>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No items have been created yet. Click below to add a new item.</p>
+{% endif %}
+
+<a href="{{ url_for('main.create') }}">
+    <button>Create New Item</button>
+</a>
+{% endblock %}
+

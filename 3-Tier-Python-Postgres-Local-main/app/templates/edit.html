@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Edit Item</h2>
+<form method="post" action="{{ url_for('main.edit_item', item_id=item.id) }}">
+    <label for="item_name">Item Name:</label>
+    <input type="text" id="item_name" name="item_name" value="{{ item.name }}" required>
+
+    <label for="item_description">Description:</label>
+    <textarea id="item_description" name="item_description" required>{{ item.description }}</textarea>
+
+    <button type="submit">Update</button>
+</form>
+<a href="{{ url_for('main.index') }}"><button>Cancel</button></a>
+{% endblock %}
+
