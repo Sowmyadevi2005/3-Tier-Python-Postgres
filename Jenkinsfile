@@ -5,12 +5,6 @@ pipeline {
     }
 
     stages {
-        stage('github checkout') {
-            steps {
-                git branch: 'main', 
-                url: 'https://github.com/Sowmyadevi2005/3-Tier-Python-Postgres.git'
-            }
-        }
         stage('python install & venv setup') {
             steps {
                 sh'''
@@ -43,13 +37,5 @@ stage('Configure PostgreSQL DB & User') {
     }
 }
 
-
-        stage('Run Application') {
-            steps {
-                sh'''
-                    $VENV_DIR/bin/python run.py
-                '''
-            }
-        }
     }
 }
