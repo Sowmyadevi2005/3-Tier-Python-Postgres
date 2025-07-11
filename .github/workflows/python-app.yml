@@ -131,7 +131,7 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
-          version: '1.23.6'
+          version: latest
 
       - name: Decode kubeconfig and apply manifests
         run: |
