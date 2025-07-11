@@ -51,8 +51,9 @@ jobs:
        trivy fs --format table -o fs-report.json .
       
     - name: Gitleaks Installation & code scan
-      run: sudo apt install gitleaks -y
-           gitleaks detect source . -r gitleaks-report.json -f json
+      run: |
+       sudo apt install gitleaks -y
+       gitleaks detect source . -r gitleaks-report.json -f json
            
     - name: Run Test cases
       run: |
