@@ -1,0 +1,95 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: flask-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              configMapKeyRef:
+                 name: app-config
+                 key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                 name: app-config
+                 key: POSTGRES_DB
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: library-frontend
+  namespace: flask-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: library-frontend
+  template:
+    metadata:
+      labels:
+        app: library-frontend
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for database; sleep 5; done; sleep 10;']
+      containers:
+      - name: library-frontend
+        image: sowmya205/python-postgres:2
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_APP
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_APP
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_ENV
+        - name: SQLALCHEMY_DATABASE_URI
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SQLALCHEMY_DATABASE_URI
+

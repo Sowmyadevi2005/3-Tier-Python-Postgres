@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=library_management  
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - library_network
+  webapp:
+    container_name: frontend-app
+    image: sowmya205/python-postgres:1
+    command: flask run --host=0.0.0.0
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@postgres/library_management
+    networks:
+      - library_network
+volumes:
+  postgres_data:
+
+networks:
+  library_network:
+      driver: bridge

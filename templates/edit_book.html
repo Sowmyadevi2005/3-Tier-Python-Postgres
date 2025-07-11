@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="fade-in">Edit Book</h2>
+<div class="form-container fade-in">
+    <form action="/edit_book/{{ book.id }}" method="post">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" value="{{ book.title }}" required>
+        <label for="genre">Genre:</label>
+        <input type="text" id="genre" name="genre" value="{{ book.genre }}" required>
+        <label for="author_id">Author:</label>
+        <select id="author_id" name="author_id" required>
+            {% for author in authors %}
+            <option value="{{ author.id }}" {% if author.id == book.author_id %}selected{% endif %}>{{ author.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Update Book">
+    </form>
+</div>
+{% endblock %}
+

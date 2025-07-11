@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: default
+type: Opaque
+data:
+  POSTGRES_USER: cG9zdGdyZXM=  # base64 encoded value of 'postgres'
+  POSTGRES_PASSWORD: cG9zdGdyZXM=  # base64 encoded value of 'postgres'
+  POSTGRES_DB: bGlicmFyeV9tYW5hZ2VtZW50  # base64 encoded value of 'library_management'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: default
+data:
+  FLASK_ENV: development
+  FLASK_APP: app.py
+  SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@postgres:5432/library_management
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: POSTGRES_DB
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for database; sleep 5; done; sleep 10;']
+      containers:
+      - name: flask-app
+        image: adijaiswal/flaskapp:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_ENV
+        - name: FLASK_APP
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_APP
+        - name: SQLALCHEMY_DATABASE_URI
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SQLALCHEMY_DATABASE_URI
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: default
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 5000
+  selector:
+    app: flask-app
+
