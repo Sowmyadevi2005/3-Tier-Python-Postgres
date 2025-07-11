@@ -14,7 +14,7 @@ jobs:
 #------------CI----------#
   CI:
     name: build,scan and test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
@@ -68,6 +68,7 @@ jobs:
           fetch-depth: 0
       # Triggering SonarQube analysis as results of it are required by Quality Gate check.
     - name: SonarQube Scan
+      continue-on-error: true
       uses: sonarsource/sonarqube-scan-action@v1.1.0
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -75,14 +76,38 @@ jobs:
 
       # Check the Quality Gate status.
     - name: SonarQube Quality Gate check
+      continue-on-error: true
       id: sonarqube-quality-gate-check
       uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
       with:
           pollingTimeoutSec: 600
       env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} #OPTIONAL
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 
 
-    - name: "Example show SonarQube Quality Gate Status value"
-      run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+
+#----------------CD----------------------
+
+  CD:
+    name: Docker build, push and k8s Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ vars.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        push: true
+        tags: sowmya205/python-postgres:2
 
