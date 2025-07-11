@@ -137,4 +137,5 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          kubectl create namespace flask-app
           kubectl apply -f K8s/ 
