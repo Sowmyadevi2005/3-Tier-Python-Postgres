@@ -88,8 +88,8 @@ jobs:
 
 #----------------CD----------------------
 
-  CD:
-    name: Docker build, push and k8s Deployment
+  Docker-build-push:
+    name: Docker build, push 
     runs-on: ubuntu-latest
     
     steps:
@@ -111,3 +111,32 @@ jobs:
         push: true
         tags: sowmya205/python-postgres:2
 
+  k8s-deployment:
+    name: k8s Deployment
+    runs-on: ubuntu-latest
+    needs: Docker-build-push
+   
+    steps:
+      - name: Checkout
+        id: checkout_code
+        uses: actions/checkout@v3
+
+      - name: AWS Credentials to EKS cluster
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'us-east-1'
+          role-to-assume: ${{ secrets.EKS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: '1.23.6'
+
+      - name: Decode kubeconfig and apply manifests
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          kubectl apply -f K8s/ 
