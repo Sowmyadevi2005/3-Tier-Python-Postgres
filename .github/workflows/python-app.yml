@@ -113,10 +113,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: AWS Credentials to EKS cluster
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::515966510834:role/github-actions-eks-admin
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
