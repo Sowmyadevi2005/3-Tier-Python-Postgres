@@ -123,10 +123,13 @@ jobs:
         uses: azure/setup-kubectl@v3
         with:
           version: latest
-
-      - name: Decode kubeconfig and apply manifests
+      - name: Configure kubeconfig
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
-          kubectl create namespace flask-app
-          kubectl apply -f K8s/
+           mkdir -p $HOME/.kube
+           echo "${{ secrets.KUBE_CONFIG_DATA }}" > $HOME/.kube/config
+      - name: Deploy to EKS
+        run: |
+            kubectl create namespace flask-app
+            kubectl apply -f K8s/
+
+
